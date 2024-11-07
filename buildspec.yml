@@ -4,6 +4,9 @@ phases:
   install:
     runtime-versions:
       python: 3.9
+    commands:
+      - echo Installing ===== cfn-lint =====
+      - pip3 install cfn-lint  
     
   pre_build:
     commands:
@@ -11,6 +14,8 @@ phases:
       - echo verifying python version installed
       - python3 --version
       - ls -l
+      - echo === Verifying cfn-lint installation ====
+      - cfn-lint --version
     finally:
       - echo moving to build stage
     
@@ -18,6 +23,12 @@ phases:
     commands:
       - echo Entered the build phase...
       - echo Build started on `date`
+      - echo I WILL CHECK IF THE CLOUDFORMATION TEMPLATE
+      - ls -l
+      - echo === RUN CFN-LINT ====
+      - cfn-lint pipeline.yml
+      - echo ==== BUILD OUR TEMPLATE ====
+      - aws cloudformation package --template-file pipeline.yml --s3-bucket testing-bckt --output-template-file build-artifact-template.yml
     finally:
       - echo build stage ended
     
@@ -29,5 +40,5 @@ phases:
       - echo post_build stage ended
 artifacts:
   files:
-    - "**/*" # Collects all files in the project directory
+    - build-artifact-template.yml
    
