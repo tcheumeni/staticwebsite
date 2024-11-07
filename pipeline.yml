@@ -1,0 +1,55 @@
+Resources:
+  EC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      InstanceType: "t2.micro"  
+      ImageId: "ami-0ddc798b3f1a5117e"   
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "Greetings from Kelly" > /var/www/html/index.html
+          
+  InstanceSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties: 
+      GroupDescription: "Allow SSH and HTTP access"
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+
+  InstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+
+  InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Roles: 
+        - !Ref InstanceRole
+
+Outputs:
+  InstanceId:
+    Description: "Instance ID of the EC2 instance"
+    Value: !Ref EC2Instance
